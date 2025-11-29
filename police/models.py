@@ -68,7 +68,8 @@ class PoliceStation(models.Model):
     taluka = models.ForeignKey(Taluka, on_delete=models.CASCADE, related_name='police_stations')
     name = models.CharField(max_length=200)
     email = models.EmailField(max_length=200, blank=True, null=True) 
-
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     def __str__(self):
         return f"{self.name} ({self.taluka.name})"
     

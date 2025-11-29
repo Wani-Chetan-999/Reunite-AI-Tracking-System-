@@ -463,55 +463,62 @@ def surveillance_match_api(request):
             # 2. Run Multi-Face AI Matching
             match_results_list = match_live_face_to_db(image_bytes)
             
+            # police/views.py (Corrected surveillance_match_api)
+
+# ... (Previous code for decoding image_bytes and running match_results_list) ...
+
             if match_results_list:
-                # Cooldown period for ALERTS (1 Minute)
-                cooldown_period_alert = timedelta(minutes=1) 
+                
+                cooldown_period_alert = timedelta(minutes=2) 
                 
                 for match in match_results_list:
                     case_id_str = match['case_id']
                     similarity = match['similarity']
                     
-                    # 3. Retrieve the Case object
                     try:
                         case_obj = Case.objects.get(complaint_id=case_id_str) 
                     except Case.DoesNotExist:
                         continue
-                
+                        
+                    # 1. EVIDENCE LOGGING (ALWAYS SAVE RAW PHOTO - NO THROTTLE)
                     
+                    
+                    # =======================================================
+                    # 2. ALERTING LOGIC: ONLY PROCEED IF LOCATION IS VALID
+                    # =======================================================
                     
                     if latitude and longitude:
-                         # --- 4. EVIDENCE LOGGING (NO THROTTLE HERE) ---
-                        # This runs IMMEDIATELY for every confirmed match.
                         file_name = f"{case_id_str}_Detection_{uuid.uuid4().hex[:6]}.jpg"
                         image_file = ContentFile(image_bytes, name=file_name)
+                        
+                        # Save the raw evidence (CasePhoto) for EVERY detected frame
                         new_photo = CasePhoto.objects.create(
                             case=case_obj, 
                             image=image_file,
                             is_detection_evidence=True,
-                            latitude=latitude,
+                            latitude=latitude, # Save Lat/Lon as NULL if unavailable
                             longitude=longitude 
                         )
                         print(f"EVIDENCE LOGGED: Photo saved for Case {case_id_str}.")
                         
-                        # 5. ALERT NOTIFICATION THROTTLING CHECK (Check DetectionAlert model)
+                        # A. ALERT THROTTLING CHECK (1 Minute Alert Cooldown)
                         latest_alert = DetectionAlert.objects.filter(
                             case=case_obj
                         ).order_by('-alert_sent_at').first()
 
                         if latest_alert and (timezone.now() - latest_alert.alert_sent_at) < cooldown_period_alert:
-                            print(f"ALERT SKIPPED: Case {case_id_str} is in 1 min alert cooldown.")
-                            # Alert is skipped, but the photo is already saved as evidence (new_photo).
-                            continue 
+                            print(f"ALERT SKIPPED: Case {case_id_str} in 1 min alert cooldown.")
+                            continue # Skip alert creation and go to the next match
 
-                        # 6. IF COOLDOWN EXPIRED: Create NEW ALERT RECORD & TRIGGER EMAIL
+                        # B. IF COOLDOWN EXPIRED: Create NEW ALERT RECORD & TRIGGER EMAIL
                         
-                        # Create the new alert record
+                        # Create the new alert record (linked to the photo just saved)
                         DetectionAlert.objects.create(
                             case=case_obj,
-                            detection_photo=new_photo, # Link to the newly saved evidence photo
+                            detection_photo=new_photo, 
                         )
 
-                        # Trigger Celery Email Task (Celery task performs its own 2-min email check)
+                        # Trigger Celery Email Task
                         send_detection_alert_email.delay(
                             case_obj.pk,
                             new_photo.pk, 
@@ -519,17 +526,21 @@ def surveillance_match_api(request):
                             latitude,
                             longitude 
                         )
+                        
+                        print(f"ALERT DISPATCHED: Full alert sent for Case {case_id_str}.")
+                        
                     else:
-                        print(f"ALERT BLOCKED: Match found for {case_id_str}, but no GPS coordinates available.")
-                
-                # 7. Return the full list of detections to the Frontend for drawing
+                        # Alert is blocked, but the evidence logging still happened above.
+                        print(f"ALERT BLOCKED: Match found for {case_id_str}, but no GPS coordinates available. Evidence is saved.")
+
+                # 3. Return the full list of detections to the Frontend for drawing
                 response_data = {
                     'status': 'match_found',
                     'detections': match_results_list 
                 }
             else:
                 response_data = {'status': 'no_match', 'detections': []}
-            
+
             return JsonResponse(response_data)
         
         except Exception as e:

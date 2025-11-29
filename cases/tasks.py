@@ -104,54 +104,56 @@ import os
 from email.mime.image import MIMEImage
 
 
-# cases/tasks.py (Final, complete version)
 # @shared_task
 # def send_detection_alert_email(case_id, detection_photo_pk, similarity, latitude, longitude):
-#     # This task now accepts five positional arguments, matching the trigger call.
+#     """
+#     Sends a high-priority email alert upon confirmed AI detection, including location data,
+#     and throttles alerts to one per 2-minute cooldown period.
+#     """
     
 #     try:
+#         # Fetch the core Case and Photo objects first
 #         case = Case.objects.get(pk=case_id)
-        
-#         # 1. FETCH ALL REQUIRED DATA FROM DB (robust)
 #         detection_photo = CasePhoto.objects.get(pk=detection_photo_pk)
         
-#         # Extract data from the fetched photo object
-#         # NOTE: latitude and longitude are now taken directly from the function arguments
-#         # passed from police/views.py, ensuring we use the latest values.
-#         detection_photo_path = detection_photo.image.name
-        
-#         # --- 2. ALERT COOLDOWN CHECK (Throttling) ---
+#         # --- 1. ALERT COOLDOWN CHECK (Throttling) ---
 #         now = timezone.now()
 #         cooldown_period = timedelta(minutes=2)
         
+#         # Check the last time an alert was successfully sent for this case
 #         last_alert = DetectionAlert.objects.filter(
 #             case=case
 #         ).order_by('-alert_sent_at').first()
         
-#         if last_alert and (timezone.now() - last_alert.alert_sent_at) < cooldown_period:
+#         if last_alert and (now - last_alert.alert_sent_at) < cooldown_period:
 #             print(f"ALERT SKIPPED (Email Throttle): Case {case.complaint_id} is in 2 min cooldown.")
 #             return
-#         detection_photo = CasePhoto.objects.get(pk=detection_photo_pk)
-        
+
+#         # 2. CREATE NEW ALERT RECORD (The Notification Log) 
+#         # This must happen BEFORE the email is sent, as it sets the new 'last_alert_sent' time.
 #         new_alert = DetectionAlert.objects.create(
 #             case=case,
 #             detection_photo=detection_photo,
 #             # alert_sent_at is auto-set to now()
 #         )
-
-#         # 3. Prepare Content & URLs
+        
+#         # --- 3. Prepare Content & URLs ---
+        
+#         detection_photo_path = detection_photo.image.name
 #         subject = f"🚨 HIGH PRIORITY ALERT: Match Found for Case ID {case.complaint_id}"
 #         image_cid = f'detection_image_{case.pk}'
         
-#         # --- LOCATION LOGIC ---
+#         # Build Photo URL (used for external viewing/linking, though CID is used for display)
+#         photo_url = f"{settings.SITE_URL}{settings.MEDIA_URL}{detection_photo_path}"
+        
+#         # Determine location display strings
 #         if latitude and longitude:
 #             map_link = f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
 #             location_string = f"{latitude}, {longitude}"
 #         else:
 #             map_link = None
 #             location_string = "Location Data Unavailable"
-#         # ---------------------
-
+            
 #         # 4. Attach Image (CRITICAL FOR DISPLAY IN GMAIL)
 #         photo_abs_path = os.path.join(settings.MEDIA_ROOT, detection_photo_path) 
         
@@ -193,67 +195,126 @@ from email.mime.image import MIMEImage
 #         print(f"ALERT SENT: Email alert successfully dispatched for Case {case.complaint_id}.")
 
 #         # 6. UPDATE TIMESTAMP
-#         case.last_alert_sent = now
-#         case.save(update_fields=['last_alert_sent'])
+#         # The 'last_alert_sent' field is now obsolete because we are relying on the DetectionAlert model.
+#         # We can remove the Case model update line entirely for a cleaner separation of concerns.
         
 #     except Case.DoesNotExist:
 #         print(f"Celery Error: Case ID {case_id} not found.")
 #     except Exception as e:
 #         print(f"Celery Error sending detection email for Case {case_id}: {e}")
         
+        
+# cases/tasks.py (Final version with Geospatial Search)
+# cases/tasks.py (Corrected imports for cross-app access)
+
+from celery import shared_task
+from django.utils import timezone
+from datetime import timedelta
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
+
+# Import core models from the SAME APP (.models)
+from .models import Case, CasePhoto, DetectionAlert 
+
+# Import PoliceStation from its actual application (Assuming 'police')
+# **CRITICAL FIX:** Adjust the 'police' app name if your location models are elsewhere
+from police.models import PoliceStation 
+
+# Used for Haversine calculation
+from math import radians, sin, cos, sqrt, atan2 
+import os
+from email.mime.image import MIMEImage
+
+# Earth's radius in kilometers
+R = 6371.0 
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """Calculates the distance between two points on the Earth's surface (in km)."""
+    lat1_rad = radians(lat1)
+    lon1_rad = radians(lon1)
+    lat2_rad = radians(lat2)
+    lon2_rad = radians(lon2)
+
+    dlon = lon2_rad - lon1_rad
+    dlat = lat2_rad - lat1_rad
+
+    a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    
+    return R * c # Distance in kilometers
+
+
 @shared_task
 def send_detection_alert_email(case_id, detection_photo_pk, similarity, latitude, longitude):
-    """
-    Sends a high-priority email alert upon confirmed AI detection, including location data,
-    and throttles alerts to one per 2-minute cooldown period.
-    """
     
     try:
-        # Fetch the core Case and Photo objects first
         case = Case.objects.get(pk=case_id)
         detection_photo = CasePhoto.objects.get(pk=detection_photo_pk)
         
-        # --- 1. ALERT COOLDOWN CHECK (Throttling) ---
-        now = timezone.now()
-        cooldown_period = timedelta(minutes=2)
+        # --- 1. ALERT COOLDOWN CHECK (2-Minute Throttle) ---
+        # now = timezone.now()
+        # cooldown_period = timedelta(minutes=1)
         
-        # Check the last time an alert was successfully sent for this case
-        last_alert = DetectionAlert.objects.filter(
-            case=case
-        ).order_by('-alert_sent_at').first()
+        # last_alert = DetectionAlert.objects.filter(case=case).order_by('-alert_sent_at').first()
         
-        if last_alert and (now - last_alert.alert_sent_at) < cooldown_period:
-            print(f"ALERT SKIPPED (Email Throttle): Case {case.complaint_id} is in 2 min cooldown.")
-            return
+        # if last_alert and (now - last_alert.alert_sent_at) < cooldown_period:
+        #     print(f"ALERT SKIPPED (Email Throttle): Case {case.complaint_id} is in 2 min cooldown.")
+        #     return
 
-        # 2. CREATE NEW ALERT RECORD (The Notification Log) 
-        # This must happen BEFORE the email is sent, as it sets the new 'last_alert_sent' time.
-        new_alert = DetectionAlert.objects.create(
-            case=case,
-            detection_photo=detection_photo,
-            # alert_sent_at is auto-set to now()
-        )
+        # 2. FIND RECIPIENT LISTS
+        recipient_list = [] # TO list (Assigned Officer)
+        cc_list = []        # CC list (Guardian and Nearest Stations)
         
-        # --- 3. Prepare Content & URLs ---
-        
+        # A. Assigned Officer (Primary Recipient)
+        # Access officer email via the user model
+        if case.police_officer and case.police_officer.email:
+            recipient_list.append(case.police_officer.email)
+            
+        # B. Guardian (Standard CC Recipient)
+        if case.guardian_email:
+            cc_list.append(case.guardian_email)
+
+        # C. FIND NEAREST POLICE STATIONS (Geospatial Search)
+        # Logic is now safe because PoliceStation is correctly imported
+        if latitude is not None and longitude is not None:
+    
+            lat_float = float(latitude)
+            lon_float = float(longitude)
+            
+            all_stations = PoliceStation.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+            
+            stations_with_distance = []
+            for station in all_stations:
+                distance = haversine_distance(
+                    lat_float, lon_float,
+                    float(station.latitude), float(station.longitude)
+                )
+                stations_with_distance.append((station, distance))
+            
+            # Sort by distance ASC
+            stations_with_distance.sort(key=lambda x: x[1])
+
+            # Debug logging
+            print("DEBUG - DISTANCE LIST:", [(s.name, d) for s, d in stations_with_distance])
+
+            for station, dist in stations_with_distance[:2]:
+                if station.email:
+                    cc_list.append(station.email)
+                    print(f"CC -> {station.name} at {dist:.2f} km")
+
+            print("DEBUG - CC LIST:", cc_list)
+
+        # 3. PREPARE EMAIL CONTENT  
         detection_photo_path = detection_photo.image.name
         subject = f"🚨 HIGH PRIORITY ALERT: Match Found for Case ID {case.complaint_id}"
         image_cid = f'detection_image_{case.pk}'
         
-        # Build Photo URL (used for external viewing/linking, though CID is used for display)
-        photo_url = f"{settings.SITE_URL}{settings.MEDIA_URL}{detection_photo_path}"
-        
         # Determine location display strings
-        if latitude and longitude:
-            map_link = f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
-            location_string = f"{latitude}, {longitude}"
-        else:
-            map_link = None
-            location_string = "Location Data Unavailable"
-            
-        # 4. Attach Image (CRITICAL FOR DISPLAY IN GMAIL)
-        photo_abs_path = os.path.join(settings.MEDIA_ROOT, detection_photo_path) 
+        location_string = f"{latitude}, {longitude}" if latitude and longitude else "Location Data Unavailable"
+        map_link = f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}" if latitude and longitude else None
         
+        # 4. Create and Send Email
         email = EmailMultiAlternatives(
             subject=subject,
             body=(
@@ -261,11 +322,13 @@ def send_detection_alert_email(case_id, detection_photo_pk, similarity, latitude
                 f"Confidence: {similarity*100:.2f}% | Location: {location_string}\n"
                 f"Action Required: Check the case dashboard immediately."
             ),
-            to=[case.police_officer.email],
-            cc=[case.guardian_email]
+            to=recipient_list, # Assigned officer
+            cc=cc_list         # Guardian and nearest stations
         )
+        print("DEBUG EMAIL LIST:", recipient_list, cc_list)
         
-        # Read the file and attach it inline
+        # Attach Image Inline (Critical for display)
+        photo_abs_path = os.path.join(settings.MEDIA_ROOT, detection_photo_path) 
         try:
             with open(photo_abs_path, 'rb') as f:
                 img = MIMEImage(f.read())
@@ -274,7 +337,7 @@ def send_detection_alert_email(case_id, detection_photo_pk, similarity, latitude
         except FileNotFoundError:
             print(f"ERROR: Image file not found at {photo_abs_path}. Skipping image attachment.")
 
-        # 5. Attach HTML Content
+        # Attach HTML Content
         html_content = render_to_string(
             'emails/detection_alert.html',
             {
@@ -286,14 +349,17 @@ def send_detection_alert_email(case_id, detection_photo_pk, similarity, latitude
                 'officer_email': case.police_officer.email if case.police_officer else 'N/A'
             }
         )
+        print("DEBUG EMAIL LIST:", recipient_list, cc_list)
+
         email.attach_alternative(html_content, "text/html")
         email.send()
-        
-        print(f"ALERT SENT: Email alert successfully dispatched for Case {case.complaint_id}.")
+        print(f"ALERT SENT: Email alert successfully dispatched for Case {case.complaint_id}. TO: {recipient_list}, CC: {cc_list}")
 
-        # 6. UPDATE TIMESTAMP
-        # The 'last_alert_sent' field is now obsolete because we are relying on the DetectionAlert model.
-        # We can remove the Case model update line entirely for a cleaner separation of concerns.
+        # # 5. CREATE NEW ALERT RECORD
+        # DetectionAlert.objects.create(
+        #     case=case,
+        #     detection_photo=detection_photo,
+        # )
         
     except Case.DoesNotExist:
         print(f"Celery Error: Case ID {case_id} not found.")

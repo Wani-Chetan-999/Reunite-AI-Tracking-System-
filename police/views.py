@@ -434,9 +434,7 @@ from cases.tasks import send_detection_alert_email
 # from cases.tasks import send_detection_alert_email 
 # from datetime import timedelta, timezone, etc.
 
-@login_required
-@csrf_exempt 
-# police/views.py (Final version integrating distinct logging and alert throttling)
+
 
 @login_required
 @csrf_exempt 
@@ -466,7 +464,6 @@ def surveillance_match_api(request):
             match_results_list = match_live_face_to_db(image_bytes)
             
             if match_results_list:
-                
                 # Cooldown period for ALERTS (1 Minute)
                 cooldown_period_alert = timedelta(minutes=1) 
                 
@@ -479,49 +476,51 @@ def surveillance_match_api(request):
                         case_obj = Case.objects.get(complaint_id=case_id_str) 
                     except Case.DoesNotExist:
                         continue
+                
+                    
+                    
+                    if latitude and longitude:
+                         # --- 4. EVIDENCE LOGGING (NO THROTTLE HERE) ---
+                        # This runs IMMEDIATELY for every confirmed match.
+                        file_name = f"{case_id_str}_Detection_{uuid.uuid4().hex[:6]}.jpg"
+                        image_file = ContentFile(image_bytes, name=file_name)
+                        new_photo = CasePhoto.objects.create(
+                            case=case_obj, 
+                            image=image_file,
+                            is_detection_evidence=True,
+                            latitude=latitude,
+                            longitude=longitude 
+                        )
+                        print(f"EVIDENCE LOGGED: Photo saved for Case {case_id_str}.")
                         
-                    # --- 4. EVIDENCE LOGGING (NO THROTTLE HERE) ---
-                    # This runs IMMEDIATELY for every confirmed match.
-                    file_name = f"{case_id_str}_Detection_{uuid.uuid4().hex[:6]}.jpg"
-                    image_file = ContentFile(image_bytes, name=file_name)
-                    
-                    new_photo = CasePhoto.objects.create(
-                        case=case_obj, 
-                        image=image_file,
-                        is_detection_evidence=True,
-                        latitude=latitude,
-                        longitude=longitude 
-                    )
-                    print(f"EVIDENCE LOGGED: Photo saved for Case {case_id_str}.")
-                    
-                    # 5. ALERT NOTIFICATION THROTTLING CHECK (Check DetectionAlert model)
-                    latest_alert = DetectionAlert.objects.filter(
-                        case=case_obj
-                    ).order_by('-alert_sent_at').first()
+                        # 5. ALERT NOTIFICATION THROTTLING CHECK (Check DetectionAlert model)
+                        latest_alert = DetectionAlert.objects.filter(
+                            case=case_obj
+                        ).order_by('-alert_sent_at').first()
 
-                    if latest_alert and (timezone.now() - latest_alert.alert_sent_at) < cooldown_period_alert:
-                        print(f"ALERT SKIPPED: Case {case_id_str} is in 1 min alert cooldown.")
-                        # Alert is skipped, but the photo is already saved as evidence (new_photo).
-                        continue 
+                        if latest_alert and (timezone.now() - latest_alert.alert_sent_at) < cooldown_period_alert:
+                            print(f"ALERT SKIPPED: Case {case_id_str} is in 1 min alert cooldown.")
+                            # Alert is skipped, but the photo is already saved as evidence (new_photo).
+                            continue 
 
-                    # 6. IF COOLDOWN EXPIRED: Create NEW ALERT RECORD & TRIGGER EMAIL
-                    
-                    # Create the new alert record
-                    DetectionAlert.objects.create(
-                        case=case_obj,
-                        detection_photo=new_photo, # Link to the newly saved evidence photo
-                    )
+                        # 6. IF COOLDOWN EXPIRED: Create NEW ALERT RECORD & TRIGGER EMAIL
+                        
+                        # Create the new alert record
+                        DetectionAlert.objects.create(
+                            case=case_obj,
+                            detection_photo=new_photo, # Link to the newly saved evidence photo
+                        )
 
-                    # Trigger Celery Email Task (Celery task performs its own 2-min email check)
-                    send_detection_alert_email.delay(
-                        case_obj.pk,
-                        new_photo.pk, 
-                        similarity,
-                        latitude,
-                        longitude 
-                    )
-                    
-                    print(f"ALERT DISPATCHED for Case {case_id_str}. NEW ALERT CREATED.")
+                        # Trigger Celery Email Task (Celery task performs its own 2-min email check)
+                        send_detection_alert_email.delay(
+                            case_obj.pk,
+                            new_photo.pk, 
+                            similarity,
+                            latitude,
+                            longitude 
+                        )
+                    else:
+                        print(f"ALERT BLOCKED: Match found for {case_id_str}, but no GPS coordinates available.")
                 
                 # 7. Return the full list of detections to the Frontend for drawing
                 response_data = {

@@ -228,7 +228,7 @@ def dashboard(request):
     unread_alerts_count = all_alerts_for_officer.filter(
         alert_sent_at__gt=last_view_time
     ).count()
-
+    
     # --- 3. CLEAR NOTIFICATIONS (Update last view time) ---
     # This marks all current notifications as 'read' for the next visit
     user_profile.last_dashboard_view = timezone.now()
@@ -251,7 +251,7 @@ from django.views.decorators.csrf import csrf_exempt # New import
 from cases.models import DetectionAlert
 @require_POST
 @login_required
-@csrf_exempt 
+# @csrf_exempt 
 def handle_notification_action(request):
     action = request.POST.get('action') # 'read' or 'delete'
     alert_pk = request.POST.get('alert_pk') # PK of the DetectionAlert
@@ -272,6 +272,7 @@ def handle_notification_action(request):
         elif action == 'read':
             alert.is_reviewed = True
             alert.save(update_fields=['is_reviewed'])
+            print(f"DEBUG: Alert PK {alert_pk} is_reviewed set to {alert.is_reviewed}")
             return JsonResponse({'status': 'success', 'message': 'Notification marked as read.'})
 
         return JsonResponse({'status': 'error', 'message': 'Invalid action.'}, status=400)
@@ -537,3 +538,4 @@ def surveillance_match_api(request):
             return JsonResponse({'status': 'error', 'message': 'Internal processing error.'}, status=400)
     
     return JsonResponse({'status': 'invalid_method'}, status=405)
+

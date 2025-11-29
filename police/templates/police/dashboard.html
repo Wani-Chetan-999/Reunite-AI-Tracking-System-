@@ -210,12 +210,12 @@
                 <div class="list-group list-group-flush" id="notificationList">
                     {% for alert in all_detections_list %}
                         
-                        {% with is_unread=alert.alert_sent_at|is_greater_than:request.user.profile.last_dashboard_view %}
+                        {% with is_unread_status=alert.is_reviewed|yesno:"false,true" %}
                         
                         <div class="list-group-item d-flex align-items-center justify-content-between 
-                            {% if is_unread %}bg-warning-subtle unread-item{% else %}read-item{% endif %}" 
+                            {% if not alert.is_reviewed %}bg-warning-subtle unread-item{% else %}read-item{% endif %}" 
                             data-pk="{{ alert.pk }}" 
-                            data-is-unread="{{ is_unread|lower }}"> <div class="row align-items-center w-100 me-2">
+                            data-is-unread="{% if not alert.is_reviewed %}true{% else %}false{% endif %}"> <div class="row align-items-center w-100 me-2">
                                 <div class="col-sm-auto">
                                     {% if alert.detection_photo %}
                                     <img 
@@ -257,7 +257,7 @@
                             </div>
                         </div>
                         {% endwith %}
-                    {% empty %}
+                        {% empty %}
                         <p class="p-4 text-center text-success mb-0">
                             <i class="bi bi-check-circle-fill me-2"></i> No AI detection alerts found.
                         </p>
@@ -275,6 +275,98 @@
 
 {% block extra_scripts %}
 <script>
+function getUrgencyColor(urgency) {
+        urgency = urgency.toLowerCase();
+        if (urgency === 'high') return 'danger';
+        if (urgency === 'medium') return 'warning';
+        return 'secondary';
+    }
+    
+    // Function to handle Search and Status Filter
+    function filterTable() {
+        const input = document.getElementById('caseSearchInput').value.toLowerCase();
+        const filterStatus = document.getElementById('caseFilterSelect').value;
+        const table = document.getElementById('casesTable');
+        const rows = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < rows.length; i++) { // Start from 1 to skip the header
+            const row = rows[i];
+            
+            // Text Search
+            const cells = row.getElementsByTagName('td');
+            let textMatch = false;
+            // Search through ID (cells[0]), Name (cells[2]), Location (cells[4])
+            if (cells[0].textContent.toLowerCase().indexOf(input) > -1 || 
+                cells[2].textContent.toLowerCase().indexOf(input) > -1 ||
+                cells[4].textContent.toLowerCase().indexOf(input) > -1) {
+                textMatch = true;
+            }
+
+            // Status Filter
+            const rowStatus = row.getAttribute('data-status');
+            let statusMatch = (filterStatus === 'all' || rowStatus === filterStatus);
+            
+            // Apply visibility
+            if (textMatch && statusMatch) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        }
+    }
+
+    // Function to handle Sorting
+    function sortCases() {
+        const sortBy = document.getElementById('caseSortSelect').value;
+        const table = document.getElementById('casesTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr[data-status]')); // Get actual data rows
+
+        rows.sort((a, b) => {
+            let aValue, bValue;
+
+            if (sortBy === 'date_asc' || sortBy === 'date_desc') {
+                // Sorting by Complaint ID or Created Date (assuming ID correlation)
+                aValue = a.querySelector('td:first-child').textContent;
+                bValue = b.querySelector('td:first-child').textContent;
+            } else if (sortBy === 'name_asc') {
+                aValue = a.getAttribute('data-name');
+                bValue = b.getAttribute('data-name');
+            } else if (sortBy === 'urgency_desc') {
+                // Simple high/medium/low priority for sorting
+                const urgencyOrder = {'high': 3, 'medium': 2, 'normal': 1};
+                aValue = urgencyOrder[a.getAttribute('data-urgency')] || 0;
+                bValue = urgencyOrder[b.getAttribute('data-urgency')] || 0;
+            }
+
+            if (sortBy.endsWith('_desc')) {
+                return (aValue < bValue) ? 1 : (aValue > bValue) ? -1 : 0;
+            } else { // _asc or default
+                return (aValue < bValue) ? -1 : (aValue > bValue) ? 1 : 0;
+            }
+        });
+
+        // Re-append rows in sorted order
+        rows.forEach(row => tbody.appendChild(row));
+    }
+    
+    // Function to clear all filters/sorts and reset
+    function clearFilters() {
+        document.getElementById('caseSearchInput').value = '';
+        document.getElementById('caseFilterSelect').value = 'all';
+        document.getElementById('caseSortSelect').value = 'date_desc';
+        filterTable(); // Apply the reset filter
+        sortCases(); // Apply the reset sort
+    }
+
+    // Initial sort on load
+    document.addEventListener('DOMContentLoaded', () => {
+        sortCases();
+    });
+
+    
+
+
     // --- Phase 2, Step 1: Frontend Camera and Streaming Logic ---
 
     // Correctly defined variables for UI elements
@@ -559,8 +651,12 @@
         // --- Helper Function to Update KPI Count ---
         function updateKpiCount() {
             if (!unreadCountSpan) return;
-            const currentCount = notificationList.querySelectorAll('.unread-item').length;
-            unreadCountSpan.textContent = currentCount;
+            
+            // Find ALL items that have the data attribute set to 'true' (unread)
+            const currentCount = notificationList.querySelectorAll('[data-is-unread="true"]').length;
+            
+            // Update the UI span element
+            unreadCountSpan.textContent = currentCount; 
         }
 
         // --- 1. FILTER LOGIC ---
@@ -583,10 +679,9 @@
         };
         
         if (filterSelect) {
-            filterSelect.addEventListener('change', applyFilter);
-            // Apply initial filter (Show Unread Only, since it's selected="true")
-            applyFilter(); 
-        }
+        filterSelect.addEventListener('change', applyFilter);
+        applyFilter(); 
+    }
 
         // --- 2. ACTION LOGIC (Read and Delete) ---
         if (notificationList) {

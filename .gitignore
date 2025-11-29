@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Django
+*.log
+db.sqlite3
+/media/
+staticfiles/
+static_root/
+.env
+
+# Virtual Environment
+venv/
+venv310/
+env/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Redis dump files (if any)
+dump.rdb
+
+# Celery beat schedule
+celerybeat-schedule
+celerybeat.pid
+
+# Onnx & AI Models Cache
+insightface/
+*.onnx
+*.bin
+
+# Temporary uploads
+/tmp/

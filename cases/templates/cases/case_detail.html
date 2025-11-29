@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block extra_head %}
+{% load case_filters_query %}
+<style>
+    /* Styling for professional dashboard look */
+    .status-pill {
+        padding: 0.35rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        font-size: 1em;
+    }
+    /* Status colors: Using standard Bootstrap classes for a cleaner look */
+    .status-pending { background-color: var(--bs-warning); color: #664d03; }
+    .status-verified { background-color: var(--bs-info); color: #055160; }
+    .status-closed { background-color: var(--bs-success); color: white; }
+    
+    .card-header-icon {
+        font-size: 1.5rem;
+        vertical-align: middle;
+        margin-right: 0.5rem;
+    }
+    .photo-grid img {
+        height: 150px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--bs-gray-300);
+    }
+    .detection-placeholder {
+        height: 150px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bs-light);
+        color: var(--bs-secondary);
+        border: 2px dashed var(--bs-gray-400);
+        border-radius: 0.5rem;
+    }
+    .danger-zone {
+        border: 1px solid var(--bs-danger);
+        background-color: var(--bs-danger-bg-subtle);
+    }
+
+    {% comment %} 
+    Added custom scroll for detection evidence section
+     {% endcomment %}
+
+     .detection-scroll-container {
+    max-height: 350px;   /* adjust as needed */
+    overflow-y: auto;
+    padding-right: 5px;
+    scrollbar-width: thin;
+}
+
+.detection-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.detection-scroll-container::-webkit-scrollbar-thumb {
+    background-color: #dc3545; /* red scroll bar */
+    border-radius: 10px;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+     
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+    
+    <h2 class="fw-bold text-primary">Case File: <span class="text-secondary">{{ case.complaint_id }}</span></h2>
+        
+        <div class="d-flex gap-2">
+            
+            <a href="{% url 'cases:get_report' case.pk %}" 
+            class="btn btn-outline-primary" 
+            target="_blank" 
+            title="Generate PDF Report">
+                <i class="bi bi-printer me-2"></i> Print Report
+            </a>
+
+            <a href="{% url 'police:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left-circle me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex align-items-center justify-content-between p-3">
+            <div class="d-flex align-items-center">
+                <span class="text-secondary me-3 fw-bold">Current Status:</span>
+                <span class="status-pill status-{{ case.status }}">{{ case.status|upper }}</span>
+            </div>
+
+            <form method="post" action="{% url 'cases:update_status' case.pk %}" class="d-flex align-items-center">
+                {% csrf_token %}
+                <label for="id_status_update" class="form-label mb-0 me-2 text-primary fw-bold small d-none d-sm-block">Update Status:</label>
+                
+                {% if status_form %}
+                    {{ status_form.status|attr:"id:id_status_update" }} 
+                {% else %}
+                    <select name="status" id="id_status_update" class="form-select form-select-sm me-2" style="width: 150px;">
+                        <option value="pending" {% if case.status == 'pending' %}selected{% endif %}>PENDING</option>
+                        <option value="verified" {% if case.status == 'verified' %}selected{% endif %}>VERIFIED</option>
+                        <option value="closed" {% if case.status == 'closed' %}selected{% endif %}>CLOSED</option>
+                    </select>
+                {% endif %}
+                <button type="submit" class="btn btn-sm btn-primary">
+                    Apply <i class="bi bi-arrow-right-circle"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white fw-bold h5">
+                    <i class="bi bi-person-fill card-header-icon"></i> Missing Person & Incident Details
+                </div>
+                <div class="card-body">
+                    <h6 class="text-info fw-bold mb-3">{{ case.missing_name }} ({{ case.missing_age|default:'N/A' }} years old)</h6>
+                    <div class="row g-3">
+                        <div class="col-12 border-bottom pb-2 mb-3">
+                            <h6 class="text-secondary">Last Seen Location</h6>
+                            <i class="bi bi-geo-alt me-1 text-primary"></i> 
+                            {{ case.last_seen_location|default:'Unknown' }} on 
+                            {{ case.last_seen_date|date:"M d, Y"|default:'N/A' }} at 
+                            {{ case.last_seen_time|default:'N/A' }}
+                        </div>
+                        
+                        <div class="col-6"><strong>Gender:</strong> {{ case.missing_gender|upper|default:'N/A' }}</div>
+                        <div class="col-6"><strong>DOB:</strong> {{ case.missing_dob|date:"Y-m-d"|default:'N/A' }}</div>
+                        <div class="col-6"><strong>Height/Weight:</strong> {{ case.missing_height|default:'N/A' }} / {{ case.missing_weight|default:'N/A' }}</div>
+                        <div class="col-6"><strong>Hair/Eyes:</strong> {{ case.missing_hair_color|default:'N/A' }} / {{ case.missing_eye_color|default:'N/A' }}</div>
+                        <div class="col-12"><strong>Special Marks:</strong> {{ case.special_marks|default:'None reported' }}</div>
+                        <div class="col-12"><strong>Clothing:</strong> {{ case.clothing_description|default:'None reported' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            
+            <div class="card shadow mb-4">
+                <div class="card-header bg-secondary text-white fw-bold h5">
+                    <i class="bi bi-person-badge card-header-icon"></i> Complainant Details
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12"><strong>Guardian:</strong> {{ case.guardian_name }} ({{ case.guardian_relationship }})</div>
+                        <div class="col-6"><strong>Phone:</strong> <a href="tel:{{ case.guardian_phone }}" class="fw-bold text-primary">{{ case.guardian_phone }}</a></div>
+                        <div class="col-6"><strong>Email:</strong> {{ case.guardian_email|default:'N/A' }}</div>
+                        <div class="col-12"><strong>Address:</strong> {{ case.guardian_address }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-light fw-bold h5">
+                    <i class="bi bi-clipboard-check card-header-icon text-primary"></i> Case Notes
+                </div>
+                <div class="card-body">
+                    <p>{{ case.notes|default:'No detailed notes recorded.' }}</p>
+                    <small class="text-muted d-block mt-2">Case Type: {{ case.case_type|upper }} | Urgency: <span class="fw-bold text-danger">{{ case.urgency|upper }}</span></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <div class="row g-3 photo-grid">
+            
+            <div class="col-md-6 border-end">
+                <h6 class="text-secondary border-bottom pb-2">Uploaded Photos (Original)</h6>
+                <div class="row g-3">
+                    {% for photo in case.photos.all|filter_by_key:"is_detection_evidence=False" %}
+                        <div class="col-4">
+                            <img src="{{ photo.image.url }}" alt="Original Photo" data-bs-toggle="modal" data-bs-target="#photoModal{{ photo.pk }}" style="cursor: pointer;">
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No photos were manually uploaded for this case.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="col-md-6 ps-md-4">
+                <h6 class="text-secondary border-bottom pb-2">Latest AI Detection Evidence</h6>
+                
+                   {% with recent_detections=case.photos.all|filter_by_key:"is_detection_evidence=True"|dictsortreversed:"uploaded_at" %}
+                            {% if recent_detections %}
+                                <h6 class="mb-2 text-danger">MATCH CONFIRMED ({{ recent_detections|length }} sightings)</h6>
+
+                                <div class="detection-scroll-container">
+                                    {% for photo in recent_detections %}
+                                        <div class="card bg-light p-1 shadow-sm d-flex flex-row align-items-center mb-2">
+                                            <img 
+                                                src="{{ photo.image.url }}" 
+                                                alt="Detection {{ forloop.counter }}"
+                                                class="rounded border border-danger"
+                                                style="height: 80px; width: 80px; object-fit: cover; cursor: pointer;"
+                                                data-bs-toggle="modal" data-bs-target="#photoModal{{ photo.pk }}"
+                                            >
+                                            
+                                            <div class="mx-3 d-flex flex-row justify-content-between align-items-center w-100">
+                                                
+                                                <p class="text-muted small mb-0 fw-bold" style="font-size: 0.8em; min-width: 140px;">
+                                                    {{ photo.uploaded_at|date:"M d, Y H:i" }}
+                                                </p>
+                                                
+                                                <div class="text-end">
+                                                    {% if photo.latitude and photo.longitude %}
+                                                        {% with map_link="https://www.google.com/maps/search/?api=1&query=" %}
+                                                            <a href="{{ map_link }}{{ photo.latitude|stringformat:"f" }},{{ photo.longitude|stringformat:"f" }}" 
+                                                            target="_blank" 
+                                                            class="btn btn-sm btn-outline-danger p-1" 
+                                                            style="font-size: 0.75rem;">
+                                                                <i class="bi bi-geo-alt-fill me-1"></i> View Location
+                                                            </a>
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        <span class="text-muted" style="font-size: 0.75rem;">Location N/A</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                        {% endwith %}
+
+                    <small class="text-muted mt-2 d-block">
+                    The facial recognition system is actively scanning for matches. Last updated: 
+                    {% with latest_detection=case.photos.all|filter_by_key:"is_detection_evidence=True"|dictsortreversed:"uploaded_at"|first %}
+                        {% if latest_detection %}
+                            {{ latest_detection.uploaded_at|date:"M d, H:i" }}
+                        {% else %}
+                            N/A (No Detections Yet)
+                        {% endif %}
+                    {% endwith %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+    {% comment %} <div class="card shadow mb-4">
+        <div class="card-header bg-light text-dark fw-bold h5">
+            <i class="bi bi-images card-header-icon text-dark"></i> Photo Evidence & AI Detection Status
+        </div>
+        <div class="card-body">
+            <div class="row g-3 photo-grid">
+                <div class="col-md-6 border-end">
+                    <h6 class="text-secondary border-bottom pb-2">Uploaded Photos ({{ case.photos.count }} total)</h6>
+                    <div class="row g-3">
+                        {% for photo in case.photos.all %}
+                            <div class="col-4">
+                                <img src="{{ photo.image.url }}" alt="Original Photo" data-bs-toggle="modal" data-bs-target="#photoModal{{ photo.pk }}" style="cursor: pointer;">
+                            </div>
+                        {% empty %}
+                            <p class="text-muted">No photos were uploaded for this case.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6 ps-md-4">
+                    <h6 class="text-secondary border-bottom pb-2">Detected Photo / Status</h6>
+                    <div class="detection-placeholder">
+                        <i class="bi bi-search me-2 h4"></i> **System is Actively Scanning...**
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        The facial recognition system is actively scanning for matches. Last scan: 
+                        {{ case.updated_at|date:"M d, H:i" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+    <div class="card shadow-lg danger-zone mb-5">
+        <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+                <i class="bi bi-exclamation-triangle-fill text-danger me-2 h4"></i>
+                <span class="fw-bold text-danger">DANGER ZONE:</span> Permanently remove this case from the system.
+            </div>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash me-2"></i> Delete Case
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to permanently delete **Case ID: {{ case.complaint_id }}**? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                
+                <form method="post" action="{% url 'cases:delete' case.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Delete Case</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% for photo in case.photos.all %}
+<div class="modal fade" id="photoModal{{ photo.pk }}" tabindex="-1" aria-labelledby="photoModalLabel{{ photo.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Original Photo ({{ forloop.counter }})</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ photo.image.url }}" alt="Original Photo" class="img-fluid" style="max-height: 80vh;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

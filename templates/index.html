@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>FindMyPerson</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+  <!-- Favicons -->
+  <link href="/media/img/favicon.png" rel="icon">
+  <link href="/media/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Jost:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="/static/assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="/static/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="/static/assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
+  <link href="/static/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="/static/assets/vendor/remixicon/remixicon.css" rel="stylesheet">
+  <link href="/static/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+  <!-- Template Main CSS File -->
+  <link href="/static/assets/css/style.css" rel="stylesheet">
+
+</head>
+
+
+<body>
+  <!-- ======= Header ======= -->
+  <header id="header" class="fixed-top ">
+    <div class="container d-flex align-items-center">
+
+      <h1 class="logo me-auto"><a href="index.html">REUNITE</a></h1>
+      <!-- Uncomment below if you prefer to use an image logo -->
+      {% comment %} <a href="index.html" class="logo me-auto"><img src="static/img/logo3.png" alt="" class="img-fluid"></a> {% endcomment %}
+
+      <nav id="navbar" class="navbar">
+        <ul>
+          <li><a class="nav-link scrollto active" href="#hero">Home</a></li>
+          <li><a class="nav-link scrollto" href="#about">About</a></li>
+          <li><a class="nav-link scrollto" href="{% url 'cases:public_missing_list' %}">Missing Person List</a></li>
+          <li><a class="nav-link scrollto" href="{% url 'cases:status_check'%}">Check Status</a></li>
+          <li class="dropdown">
+              <a href="#" class="getstarted scrollto"> 
+                  <span>OFFICIAL LOGIN</span> 
+                  <i class="bi bi-chevron-down"></i>
+              </a>
+              <ul style="z-index: 100;">
+                <li><a href="{% url 'police:login' %}">Police/Department Login</a></li>
+                <li><a href="{% url 'admin:index' %}">Admin Panel</a></li>
+              </ul>
+          </li>
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav><!-- .navbar -->
+    </div>
+  </header><!-- End Header -->
+
+  <!-- ======= Hero Section ======= -->
+  <section id="hero" class="d-flex align-items-center">
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-6 d-flex flex-column justify-content-center pt-4 pt-lg-0 order-2 order-lg-1" data-aos="fade-up" data-aos-delay="200">
+          <h1>Connecting Hearts, Reuniting Families</h1>
+          <h2>FindMyPerson, powered by AI and ML, is a dedicated initiative committed to finding and reuniting missing individuals with their families across India. We leverage cutting-edge technology and compassionate teamwork to ensure that no one is left behind.</h2>
+          <div class="d-flex justify-content-center justify-content-lg-start">
+            <a href="#about" class="btn-get-started scrollto">Get Started</a>
+            <a href="https://www.youtube.com/watch?v=jDDaplaOz7Q" class="glightbox btn-watch-video"><i class="bi bi-play-circle"></i><span>Watch Video</span></a>
+          </div>
+        </div>
+        <div class="col-lg-6 order-1 order-lg-2 hero-img" data-aos="zoom-in" data-aos-delay="200">
+          <img src="static/img/hero-img3.png" class="img-fluid animated" alt="">
+        </div>
+      </div>
+    </div>
+
+  </section><!-- End Hero -->
+
+  <main id="main">
+
+<section id="about" class="about">
+  <div class="container" data-aos="fade-up">
+
+    <div class="section-title">
+      <h2>How FindMyPerson Works: The High-Accuracy 4-Phase System</h2>
+      <p>We combine crucial information provided by guardians and police with cutting-edge AI to maximize the chances of a fast reunion. Every step is designed for maximum speed and certainty.</p>
+    </div>
+
+    <div class="row content">
+      
+      <div class="col-lg-6">
+        
+        <h3 class="fw-bold mb-4">Phase 1 & 2: Input and AI Training</h3>
+        
+        <div class="d-flex align-items-start mb-4">
+            <i class="ri-mail-check-line text-success me-3" style="font-size: 32px;"></i>
+            <div>
+                <h5 class="fw-bold mb-1">1. Registration & Immediate Report</h5>
+                <p class="small text-muted mb-0">The guardian registers the case via the police department. They immediately receive an email confirmation with the unique Complaint ID and a detailed printable report for their records.</p>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-start mb-4">
+            <i class="ri-brain-line text-success me-3" style="font-size: 32px;"></i>
+            <div>
+                <h5 class="fw-bold mb-1">2. High-Accuracy AI Training (Guardian Input)</h5>
+                <p class="small text-muted mb-0">Guardians upload up to 5 high-resolution images. These images are used to train our ML model, creating a robust feature profile for the missing person, ensuring maximum accuracy during the live search.</p>
+            </div>
+        </div>
+        
+        <a href="#" class="btn btn-primary mt-2">File Your Report Now</a>
+      </div>
+
+      <div class="col-lg-6 pt-4 pt-lg-0 border-start border-1 border-light">
+        
+        <h3 class="fw-bold mb-4 ps-3">Phase 3 & 4: Live Search and Resolution</h3>
+        
+        <div class="d-flex align-items-start mb-4 ps-3">
+            <i class="ri-vidicon-line text-info me-3" style="font-size: 32px;"></i>
+            <div>
+                <h5 class="fw-bold mb-1">3. Live CCTV & Camera Feed Matching</h5>
+                <p class="small text-muted mb-0">The trained ML profile is deployed to continuously scan CCTV and camera live feeds. Upon detecting a match, the system generates a location pin in real-time.</p>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-start mb-4 ps-3">
+            <i class="ri-map-pin-line text-info me-3" style="font-size: 32px;"></i>
+            <div>
+                <h5 class="fw-bold mb-1">4. Police Alert & Status Update</h5>
+                <p class="small text-muted mb-0">The nearest police station is instantly alerted with the person's precise location. Once the case is resolved, the status is updated, and the guardian is notified and can track the progress online.</p>
+            </div>
+        </div>
+        
+        <div class="row text-center g-3 mt-4">
+            <div class="col-4">
+                <div class="p-3 bg-light rounded shadow-sm">
+                    <h4 class="fw-bold text-danger mb-0">98%</h4>
+                    <p class="small text-muted mb-0">Match Accuracy</p>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-3 bg-light rounded shadow-sm">
+                    <h4 class="fw-bold text-info mb-0">Real-Time</h4>
+                    <p class="small text-muted mb-0">CCTV Scanning</p>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-3 bg-light rounded shadow-sm">
+                    <h4 class="fw-bold text-success mb-0">24/7</h4>
+                    <p class="small text-muted mb-0">Tracking Access</p>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+   <section id="faq" class="faq section-bg">
+      <div class="container" data-aos="fade-up">
+
+        <div class="section-title">
+          <h2>Frequently Asked Questions</h2>
+          <p>These answers address common concerns from guardians, citizens, and police personnel regarding reporting, data, technology, and case resolution protocols.</p>
+        </div>
+
+        <div class="faq-list">
+          <ul>
+            <li data-aos="fade-up" data-aos-delay="100">
+              <i class="bx bx-help-circle icon-help"></i> <a data-bs-toggle="collapse" class="collapse" data-bs-target="#faq-list-1">How quickly does the search begin after I file a report? <i class="bx bx-chevron-down icon-show"></i><i class="bx bx-chevron-up icon-close"></i></a>
+              <div id="faq-list-1" class="collapse show" data-bs-parent=".faq-list">
+                <p>
+                  The search is instantaneous. Once the police verify and submit the case, our AI engine begins scanning live and archival data within minutes. You receive your unique Complaint ID immediately via email, and the local department receives an automated alert to initiate ground protocols.
+                </p>
+              </div>
+            </li>
+
+            <li data-aos="fade-up" data-aos-delay="200">
+              <i class="bx bx-help-circle icon-help"></i> <a data-bs-toggle="collapse" data-bs-target="#faq-list-2" class="collapsed"> What kind of photos provide the best matching accuracy? <i class="bx bx-chevron-down icon-show"></i><i class="bx bx-chevron-up icon-close"></i></a>
+              <div id="faq-list-2" class="collapse" data-bs-parent=".faq-list">
+                <p>
+                  For the best results, upload 5 high-resolution images showing the missing person's face clearly. These should ideally include: 1) a close-up frontal photo, 2) a profile photo, and 3) a full-body photo. Our system uses these images to train the ML model for maximum feature recognition.
+                </p>
+              </div>
+            </li>
+
+            <li data-aos="fade-up" data-aos-delay="300">
+              <i class="bx bx-help-circle icon-help"></i> <a data-bs-toggle="collapse" data-bs-target="#faq-list-3" class="collapsed"> Can I track the progress of my case online? <i class="bx bx-chevron-down icon-show"></i><i class="bx bx-chevron-up icon-close"></i></a>
+              <div id="faq-list-3" class="collapse" data-bs-parent=".faq-list">
+                <p>
+                  Yes. Using your Complaint ID on the "Check Status" page, you can see the case's current status (e.g., Pending Verification, Active Search, Resolved). This provides real-time transparency regarding the police investigation efforts.
+                </p>
+              </div>
+            </li>
+            
+            <li data-aos="fade-up" data-aos-delay="400">
+              <i class="bx bx-help-circle icon-help"></i> <a data-bs-toggle="collapse" data-bs-target="#faq-list-4" class="collapsed"> How does FindMyPerson use CCTV and prioritize privacy? <i class="bx bx-chevron-down icon-show"></i><i class="bx bx-chevron-up icon-close"></i></a>
+              <div id="faq-list-4" class="collapse" data-bs-parent=".faq-list">
+                <p>
+                  The system only uses anonymized feature templates for searching and does not store identifiable civilian footage. Data is secured using advanced encryption techniques, and access is strictly limited to verified police officers (Department Login) for official duties only.
+                </p>
+              </div>
+            </li>
+
+            <li data-aos="fade-up" data-aos-delay="500">
+              <i class="bx bx-help-circle icon-help"></i> <a data-bs-toggle="collapse" data-bs-target="#faq-list-5" class="collapsed"> As a police officer, how does this system assist my duties? <i class="bx bx-chevron-down icon-show"></i><i class="bx bx-chevron-up icon-close"></i></a>
+              <div id="faq-list-5" class="collapse" data-bs-parent=".faq-list">
+                <p>
+                  The system provides three major benefits: 1) Instant Reporting (eliminating paperwork), 2) Real-Time Alerts (locating subjects using live camera feeds), and 3) Unified Data (a central dashboard to view all cases and updates). It provides technology to significantly speed up your investigation time.
+                </p>
+              </div>
+            </li>
+            
+            <li data-aos="fade-up" data-aos-delay="600">
+              <i class="bx bx-help-circle icon-help"></i> <a data-bs-toggle="collapse" data-bs-target="#faq-list-6" class="collapsed"> What should I do if I find a match in the public area? <i class="bx bx-chevron-down icon-show"></i><i class="bx bx-chevron-up icon-close"></i></a>
+              <div id="faq-list-6" class="collapse" data-bs-parent=".faq-list">
+                <p>
+                  If you believe you have located a missing person listed on our public database, DO NOT approach the individual. Immediately contact your local police station and reference the Complaint ID displayed with the person's profile.
+                </p>
+              </div>
+            </li>
+
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+  </main><!-- End #main --><footer id="footer">
+
+    <div class="footer-top">
+      <div class="container">
+        <div class="row">
+
+          <div class="col-lg-3 col-md-6 footer-contact">
+            <h3>FindMyPerson</h3>
+            <p>
+              Central Command Unit <br>
+              Pune, India <br>
+              <br>
+              <strong>Phone:</strong> <a href="tel:+91 82755 40085">+91 82755 40085</a><br>
+              <strong>Email:</strong> <a href="mailto:info@findmyperson.com">info@findmyperson.com</a><br>
+            </p>
+          </div>
+
+          <div class="col-lg-3 col-md-6 footer-links">
+            <h4>Useful Links</h4>
+            <ul>
+              <li><i class="bx bx-chevron-right"></i> <a href="/">Home</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="#about">About Us</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="#solutions">Our Solutions</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="#">Terms of Service</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="#">Privacy Policy</a></li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 footer-links">
+            <h4>Quick Actions</h4>
+            <ul>
+              <li><i class="bx bx-chevron-right"></i> <a href="#">File New Report</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="#">Check Report Status</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="#">View Missing Persons List</a></li>
+              <li><i class="bx bx-chevron-right"></i> <a href="#">Official Login</a></li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 footer-links">
+            <h4>Connect With Us</h4>
+            <p>Stay updated and engaged with our mission to reunite families through our social media channels.</p>
+            <div class="social-links mt-3">
+              <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>
+              <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
+              <a href="#" class="instagram"><i class="bx bxl-instagram"></i></a>
+              <a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="container footer-bottom clearfix">
+      <div class="copyright">
+        &copy; Copyright <strong><span>FindMyPerson</span></strong>. All Rights Reserved
+      </div>
+      <div class="credits">
+        Designed by <a href="https://bootstrapmade.com/" target="_blank">BootstrapMade</a>
+      </div>
+    </div>
+</footer>
+
+  <div id="preloader"></div>
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Vendor JS Files -->
+  <script src="/static/assets/vendor/aos/aos.js"></script>
+  <script src="/static/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/assets/vendor/glightbox/js/glightbox.min.js"></script>
+  <script src="/static/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+  <script src="/static/assets/vendor/swiper/swiper-bundle.min.js"></script>
+  <script src="/static/assets/vendor/waypoints/noframework.waypoints.js"></script>
+  <script src="/static/assets/vendor/php-email-form/validate.js"></script>
+
+  <!-- Template Main JS File -->
+  <script src="/static/assets/js/main.js"></script>
+
+</body>
+</html>

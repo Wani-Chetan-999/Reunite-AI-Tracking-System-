@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* Basic inline styles for email client compatibility */
+        .container {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #ddd; /* Light border around the main content */
+        }
+        .header {
+            background-color: #1e40af; /* Deep Blue (Primary color) */
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .banner-info {
+            background-color: #f0f4ff; /* Very Light Blue */
+            border-left: 5px solid #1e40af;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 15px;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .detail-table th, .detail-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #d9534f; /* Red/Danger for high visibility */
+            font-size: 16px;
+            border: 1px solid #d9534f; /* Border for the Complaint ID */
+            padding: 5px 10px;
+            display: inline-block;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="header">
+        <h1 style="margin: 0; font-size: 24px;">REUNITE Portal</h1>
+        <p style="margin: 5px 0 0; font-size: 14px;">Bringing families back together.</p>
+    </div>
+
+    <div class="content">
+        <h3 style="color: #1e40af; border-bottom: 2px solid #ddd; padding-bottom: 5px;">
+            Case Registration Confirmed
+        </h3>
+        
+        <p>Dear <strong style="color: #1e40af;">{{ case.guardian_name }}</strong>,</p>
+
+        <p>Thank you for reporting a missing person. Your case has been successfully registered with the REUNITE system.</p>
+
+        <div class="banner-info">
+            <p style="margin: 0;"><strong>📢 IMPORTANT: Your Unique Complaint ID:</strong></p>
+            <p style="margin-top: 5px; margin-bottom: 0;">
+                <span class="highlight">{{ case.complaint_id }}</span>
+            </p>
+            <p style="margin-top: 10px; font-size: 13px;">Please use this ID for all future inquiries regarding <strong>{{ case.missing_name }}<strong>.</p>
+        </div>
+
+        <h4 style="color: #333; margin-top: 25px;">Essential Case Details:</h4>
+        <table class="detail-table">
+            <tr>
+                <th style="width: 40%; font-weight: bold; color: #555;">Missing Person:</th>
+                <td>{{ case.missing_name }} (Age: {{ case.missing_age|default:'N/A' }})</td>
+            </tr>
+            <tr>
+                <th style="font-weight: bold; color: #555;">Current Status:</th>
+                <td style="font-weight: bold; color: #1e40af;">{{ case.status|upper }}</td>
+            </tr>
+            <tr>
+                <th style="font-weight: bold; color: #555;">Last Seen Location:</th>
+                <td>{{ case.last_seen_location|default:'N/A' }}</td>
+            </tr>
+            <tr>
+                <th style="font-weight: bold; color: #555;">Date/Time Reported:</th>
+                <td>{{ case.created_at|date:'M d, Y' }} at {{ case.created_at|time:'H:i' }}</td>
+            </tr>
+        </table>
+        
+        <h4 style="color: #333; margin-top: 25px;">Next Steps:</h4>
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li style="margin-bottom: 10px;"><strong style="color: #1e40af;">Contact:</strong> You will be contacted shortly by the assigned police officer (Phone: {{ case.guardian_phone }}).</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #1e40af;">Portal Link:</strong> <a href="{% url 'police:dashboard' %}" style="color: #d9534f; text-decoration: none; font-weight: bold;">Click Here to Access Your Dashboard</a> (Requires Login)</li>
+            <li style="margin-bottom: 10px;"><strong style="color: #1e40af;">Tips & Safety:</strong> <a href="YOUR_SAFETY_GUIDE_URL" style="color: #1e40af; text-decoration: none;">View Safety Guidelines</a></li>
+        </ul>
+
+        <p style="margin-top: 30px; font-size: 13px; color: #777;">
+            Sincerely,<br>
+            The REUNITE Police Reporting Team
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

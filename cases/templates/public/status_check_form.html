@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg p-4">
+                <div class="card-body">
+                    <h2 class="card-title text-center text-primary fw-bold mb-4">Track Your Case Status</h2>
+                    <p class="text-center text-secondary mb-4">Enter the unique Complaint ID you received via email to check the progress of your missing person report.</p>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-danger">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.complaint_id.label_tag }}
+                        {{ form.complaint_id }}
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
+                            Check Status <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+/* --- Additional styles for a rich, modern form UI --- */
+
+/* Customizing colors if not already done in the base template's CSS */
+:root {
+    --bs-primary: #1e40af; /* Deep Indigo Blue */
+    --bs-info: #06b6d4;    /* Teal/Cyan for Missing Person */
+    --bs-warning: #f59e0b; /* Amber/Orange for Last Seen */
+    --bs-success: #10b981; /* Emerald Green for Case Details */
+    --bs-danger: #ef4444;  /* Red for Photos/Alerts */
+}
+
+/* Enhancing Card Headers (for the steps) */
+.card-header {
+    border-bottom: none;
+    border-radius: 0.75rem 0.75rem 0 0 !important; /* Rounded corners only on top */
+    padding: 1.25rem 1.5rem; /* More padding */
+    font-size: 1.25rem;
+    letter-spacing: 0.5px;
+}
+
+/* General Input Styling for a flat, modern look */
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(30, 64, 175, 0.25); /* Subtle focus ring */
+    background-color: var(--bs-white);
+}
+
+/* Button enhancements for impact */
+.btn-primary, .btn-success {
+    padding: 0.75rem 2rem;
+    font-weight: 700;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary:hover, .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Specific styling for the step progress */
+.step-indicator {
+    padding: 0 5%; /* Adjusted padding for the step pills */
+}
+.step-pill {
+    min-width: 120px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure Django form elements (if rendered without Bootstrap classes) look good */
+/* Note: This assumes your Django forms use a widget that renders inputs with class="form-control" */
+input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+    /* Applying common styles in case Django fields are rendered without classes */
+    width: 100%;
+    /* Add form-control styles here if necessary, or ensure your forms.py uses Bootstrap widgets */
+}
+
+/* Custom CSS to style the dropdown menu for the "Get Started" button */
+#header .navbar .dropdown ul {
+    /* Box Appearance */
+    border-radius: 6px; /* Matches button corners */
+    padding: 10px 0;
+    margin-top: 5px;
+    min-width: 250px;
+    box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Style for individual links */
+#header .navbar .dropdown ul a {
+    padding: 10px 20px;
+    font-weight: 500;
+    color: #333;
+    transition: 0.3s;
+}
+
+/* Hover Effect - Crucial for UX */
+#header .navbar .dropdown ul a:hover {
+    color: #47b2e4; /* Use your theme's primary color */
+    background-color: #f7f9fc; /* Light background highlight */
+}

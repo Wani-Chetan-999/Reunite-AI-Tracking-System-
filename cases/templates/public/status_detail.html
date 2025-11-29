@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    /* 🛑 ADD THIS CUSTOM STYLING 🛑 */
+    /* Status Color Mapping (CRUCIAL) */
+    .status-badge-pending { background-color: #ffc107 !important; color: #664d03 !important; }
+    .status-badge-verified { background-color: #0dcaf0 !important; color: #055160 !important; }
+    .status-badge-closed { background-color: #198754 !important; color: white !important; }
+    
+    /* Timeline Styling */
+    .timeline {
+        position: relative;
+        padding-left: 20px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 2px;
+        background-color: #ddd; /* Light vertical line */
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 15px;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -8px; /* Centers the dot over the vertical line */
+        top: 4px;
+        width: 16px !important; 
+        height: 16px !important;
+        border-radius: 50%;
+        border: 4px solid #f8f8f8; /* White/light background ring */
+    }
+    .timeline-item:last-child .timeline-dot {
+        border-color: #fff; /* Hide border on last item for a clean stop */
+    }
+    .timeline-item .timeline-date {
+        font-size: 0.9em;
+        color: #888;
+        display: block;
+    }
+    .timeline-item p {
+        font-size: 0.95em;
+    }
+
+    /* Profile Summary Styling */
+    .profile-card {
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+        padding: 20px;
+        transition: box-shadow 0.3s;
+    }
+    .profile-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+    .profile-card strong {
+        color: #0b4187;
+    }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="fw-bold text-dark">Case Progress: <span class="text-primary">{{ case.complaint_id }}</span></h2>
+        
+        <div class="d-flex gap-2">
+            <a href="{% url 'cases:get_report' case.pk %}" class="btn btn-primary" target="_blank">
+                <i class="bi bi-file-earmark-pdf-fill me-2"></i> Download Report
+            </a>
+            <a href="{% url 'cases:status_check' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left-circle me-2"></i> New Search
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <h5 class="fw-bold text-dark">Missing Person: {{ case.missing_name|upper }}</h5>
+                    <p class="mb-0 text-muted">Last Seen: {{ case.last_seen_location|default:'N/A' }}</p>
+                    <p class="mb-0 text-muted">Registered: {{ case.created_at|date:"M d, Y" }}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="badge status-badge-{{ case.status }} p-3 fs-6">
+                        CURRENT STATUS: {{ case.status|upper }}
+                    </span>
+                    <p class="text-danger small mt-2">Note: Status is updated by police upon verification or resolution.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h3 class="fw-bold text-secondary mt-5 mb-3">Case Timeline & Updates</h3>
+    <div class="timeline">
+        {% for update in updates %}
+        <div class="timeline-item d-flex mb-4">
+            <div class="timeline-dot me-3 bg-primary"></div>
+            <div>
+                <span class="fw-bold text-dark timeline-date">{{ update.date|date:"H:i, M d" }}</span>
+                <p class="text-muted mb-0">{{ update.text }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No specific updates recorded yet. Please check back later.</p>
+        {% endfor %}
+    </div>
+
+    <h3 class="fw-bold text-secondary mt-5 mb-3">Profile Summary</h3>
+    <div class="card profile-card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Age/Gender:</strong> {{ case.missing_age|default:'N/A' }} / {{ case.missing_gender|default:'N/A' }}</p>
+                    <p><strong>Special Marks:</strong> {{ case.special_marks|default:'None' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Height/Weight:</strong> {{ case.missing_height|default:'N/A' }} / {{ case.missing_weight|default:'N/A' }}</p>
+                    <p><strong>Eye/Hair Color:</strong> {{ case.missing_eye_color|default:'N/A' }} / {{ case.missing_hair_color|default:'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

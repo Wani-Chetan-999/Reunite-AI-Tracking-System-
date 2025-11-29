@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_head %}
+<style>
+  /* Local styling to ensure form fields look uniform and full-width in the grid */
+  .form-step label {
+    font-weight: 600; /* Semi-bold labels */
+    color: var(--bs-primary); /* Primary color for labels */
+    margin-bottom: 0.25rem;
+  }
+  .form-step .form-control, .form-step .form-select {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  .form-step .card {
+    transition: all 0.3s ease-in-out;
+    border: 1px solid var(--bs-gray-300); /* Lighter border default */
+  }
+  /* The active step card will get a border highlight */
+  .form-step.active .card {
+    border: 1px solid var(--bs-primary);
+    box-shadow: 0 0 20px rgba(30, 64, 175, 0.1); /* Soft glow/shadow */
+  }
+  /* Custom step indicator styling */
+  .step-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 0 10%; /* Center the pills a bit */
+  }
+  .step-pill {
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    background-color: var(--bs-gray-200);
+    color: var(--bs-secondary);
+    font-weight: 600;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    z-index: 2;
+  }
+  .step-pill.active {
+    background-color: var(--bs-primary);
+    color: white;
+    box-shadow: 0 4px 10px rgba(30, 64, 175, 0.3);
+  }
+  .step-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--bs-gray-300);
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+  .progress-bar {
+    border-radius: 0.75rem; /* Match card radius */
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-5 text-center fw-light text-secondary">
+    <i class="bi bi-person-bounding-box me-2"></i> Report a Missing Person
+  </h2>
+
+  <div class="step-indicator position-relative">
+    <div class="step-line"></div>
+    <span class="step-pill active" data-step="0"><i class="bi bi-person-badge-fill me-1"></i> Guardian</span>
+    <span class="step-pill" data-step="1"><i class="bi bi-people-fill me-1"></i> Missing Person</span>
+    <span class="step-pill" data-step="2"><i class="bi bi-geo-alt-fill me-1"></i> Last Seen</span>
+    <span class="step-pill" data-step="3"><i class="bi bi-file-earmark-text-fill me-1"></i> Case Details</span>
+    <span class="step-pill" data-step="4"><i class="bi bi-camera-fill me-1"></i> Photos</span>
+  </div>
+
+  <form id="caseWizardForm" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+        {% if case_form.errors %}
+        <div class="alert alert-danger" role="alert">
+            <strong>Case Registration Failed:</strong> Please correct the errors below.
+            <ul>
+                {% for field in case_form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in case_form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+    <div class="form-step active" data-step-index="0">
+      <div class="card shadow-lg mb-4">
+        <div class="card-header bg-primary text-white fw-bold h5">
+          <i class="bi bi-person-badge me-2"></i> 1. Guardian / Complainant Information
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-6">{{ case_form.guardian_name.label_tag }} {{ case_form.guardian_name }}</div>
+            <div class="col-md-6">{{ case_form.guardian_relationship.label_tag }} {{ case_form.guardian_relationship }}</div>
+            <div class="col-md-4">{{ case_form.guardian_phone.label_tag }} {{ case_form.guardian_phone }}</div>
+            <div class="col-md-4">{{ case_form.guardian_email.label_tag }} {{ case_form.guardian_email }}</div>
+            <div class="col-md-4">{{ case_form.guardian_aadhaar.label_tag }} {{ case_form.guardian_aadhaar }}</div>
+            <div class="col-12">{{ case_form.guardian_address.label_tag }} {{ case_form.guardian_address }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="text-end">
+        <button type="button" class="btn btn-primary btn-lg next-btn"><i class="bi bi-arrow-right-circle me-2"></i> Next Step</button>
+      </div>
+    </div>
+
+    <div class="form-step d-none" data-step-index="1">
+      <div class="card shadow-lg mb-4">
+        <div class="card-header bg-info text-white fw-bold h5">
+          <i class="bi bi-person me-2"></i> 2. Missing Person Details
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-6">{{ case_form.missing_name.label_tag }} {{ case_form.missing_name }}</div>
+            <div class="col-md-2">{{ case_form.missing_age.label_tag }} {{ case_form.missing_age }}</div>
+            <div class="col-md-4">{{ case_form.missing_dob.label_tag }} {{ case_form.missing_dob }}</div>
+          </div>
+          <div class="row g-4 mt-1">
+            <div class="col-md-4">{{ case_form.missing_gender.label_tag }} {{ case_form.missing_gender }}</div>
+            <div class="col-md-4">{{ case_form.missing_height.label_tag }} {{ case_form.missing_height }}</div>
+            <div class="col-md-4">{{ case_form.missing_weight.label_tag }} {{ case_form.missing_weight }}</div>
+          </div>
+          <div class="row g-4 mt-1">
+            <div class="col-md-6">{{ case_form.missing_eye_color.label_tag }} {{ case_form.missing_eye_color }}</div>
+            <div class="col-md-6">{{ case_form.missing_hair_color.label_tag }} {{ case_form.missing_hair_color }}</div>
+          </div>
+          <hr class="my-4">
+          <div class="row g-4">
+            <div class="col-12">{{ case_form.clothing_description.label_tag }} {{ case_form.clothing_description }}</div>
+            <div class="col-12">{{ case_form.special_marks.label_tag }} {{ case_form.special_marks }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-left-circle me-2"></i> Previous</button>
+        <button type="button" class="btn btn-primary next-btn">Next Step <i class="bi bi-arrow-right-circle me-2"></i></button>
+      </div>
+    </div>
+
+    <div class="form-step d-none" data-step-index="2">
+      <div class="card shadow-lg mb-4">
+        <div class="card-header bg-warning text-white fw-bold h5">
+          <i class="bi bi-pin-map me-2"></i> 3. Last Seen / Incident
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-6">{{ case_form.last_seen_location.label_tag }} {{ case_form.last_seen_location }}</div>
+            <div class="col-md-3">{{ case_form.last_seen_date.label_tag }} {{ case_form.last_seen_date }}</div>
+            <div class="col-md-3">{{ case_form.last_seen_time.label_tag }} {{ case_form.last_seen_time }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-left-circle me-2"></i> Previous</button>
+        <button type="button" class="btn btn-primary next-btn">Next Step <i class="bi bi-arrow-right-circle me-2"></i></button>
+      </div>
+    </div>
+
+    <div class="form-step d-none" data-step-index="3">
+      <div class="card shadow-lg mb-4">
+        <div class="card-header bg-success text-white fw-bold h5">
+          <i class="bi bi-clipboard-check me-2"></i> 4. Case Details
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-4">{{ case_form.case_type.label_tag }} {{ case_form.case_type }}</div>
+            <div class="col-md-4">{{ case_form.urgency.label_tag }} {{ case_form.urgency }}</div>
+          </div>
+          <div class="row g-4 mt-1">
+            <div class="col-12">{{ case_form.notes.label_tag }} {{ case_form.notes }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-left-circle me-2"></i> Previous</button>
+        <button type="button" class="btn btn-primary next-btn">Next Step <i class="bi bi-arrow-right-circle me-2"></i></button>
+      </div>
+    </div>
+
+    <div class="form-step d-none" data-step-index="4">
+      <div class="card shadow-lg mb-4">
+        <div class="card-header bg-danger text-white fw-bold h5">
+          <i class="bi bi-images me-2"></i> 5. Photographs (multiple allowed)
+        </div>
+        <div class="card-body p-4">
+          <div class="mb-3">
+            <label for="id_images" class="form-label fw-bold text-primary">Upload Photos</label>
+            <input type="file" name="images" id="id_images" multiple accept="image/*" class="form-control mb-2"/>
+            <small class="form-text text-muted">Upload high-resolution front, side, and full body photos (recommended). Maximum 5 photos.</small>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-left-circle me-2"></i> Previous</button>
+        <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+          <i class="bi bi-send-fill me-2"></i> Register Case
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  const steps = document.querySelectorAll('.form-step');
+  const stepPills = document.querySelectorAll('.step-pill');
+  const nextBtns = document.querySelectorAll('.next-btn');
+  const prevBtns = document.querySelectorAll('.prev-btn');
+  let currentStep = 0;
+
+  // =========================================================
+  // 1. Core Step Management
+  // =========================================================
+
+  function updateSteps() {
+    steps.forEach((step, index) => {
+      step.classList.add('d-none');
+      step.classList.remove('active');
+      if (index === currentStep) {
+        step.classList.remove('d-none');
+        // Add a class for styling the active card/step
+        setTimeout(() => step.classList.add('active'), 10); // small delay for transition
+      }
+    });
+
+    // Update the visual step pills
+    stepPills.forEach((pill, index) => {
+      pill.classList.remove('active');
+      if (index === currentStep) {
+        pill.classList.add('active');
+      }
+    });
+  }
+
+  // =========================================================
+  // 2. Validation Logic
+  // =========================================================
+
+  function validateStep(stepIndex) {
+    const currentStepElement = document.querySelector(`.form-step[data-step-index="${stepIndex}"]`);
+    let isValid = true;
+    
+    // Selects all elements with the 'required' attribute within the current step
+    const requiredFields = currentStepElement.querySelectorAll('[required]');
+
+    requiredFields.forEach(input => {
+      // Check if the input is valid according to HTML5 constraints (including 'required')
+      // NOTE: This relies on your forms.py setting the 'required' attribute on widgets!
+      if (!input.checkValidity()) {
+        input.classList.add('is-invalid'); // Add Bootstrap class for visual feedback
+        isValid = false;
+      } else {
+        input.classList.remove('is-invalid'); // Remove if valid
+      }
+    });
+
+    if (!isValid) {
+      // Find and scroll to the first invalid field for better UX
+      const firstInvalid = currentStepElement.querySelector('.is-invalid');
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    return isValid;
+  }
+  
+  // =========================================================
+  // 3. Event Listeners
+  // =========================================================
+
+  // Next Button Logic (Includes Validation)
+  nextBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // ⚠️ Use Validation to BLOCK progression if fields are incomplete ⚠️
+      if (validateStep(currentStep)) { 
+        if (currentStep < steps.length - 1) {
+          currentStep++;
+          updateSteps();
+        }
+      } 
+    });
+  });
+
+  // Previous Button Logic (No Validation needed)
+  prevBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (currentStep > 0) {
+        currentStep--;
+        updateSteps();
+      }
+    });
+  });
+
+  // Photo Upload Limit Check (Step 4)
+  const imageInput = document.getElementById('id_images');
+  if (imageInput) {
+    imageInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 5) {
+          alert("You can upload a maximum of 5 photos.");
+          e.target.value = ''; // Clear the selected files
+      }
+    });
+  }
+
+  // Handle direct click on step pills for navigation (optional)
+  stepPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      const stepIndex = parseInt(pill.getAttribute('data-step'));
+      
+      // OPTIONAL: You may want to validate before jumping forward, 
+      // but for simplicity and user freedom, we allow direct clicks for now.
+      currentStep = stepIndex;
+      updateSteps();
+    });
+  });
+
+
+  // Initial load
+  updateSteps();
+</script>
+{% endblock %}

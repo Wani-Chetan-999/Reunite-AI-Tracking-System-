@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+        <div class="card shadow-lg p-5 mt-4 auth-card">
+            <div class="card-body p-0">
+                <h2 class="card-title text-center mb-2 fw-bold text-primary">
+                    <i class="bi bi-person-plus-fill me-2"></i> Police Officer Registration
+                </h2>
+                <p class="text-center text-muted mb-5">
+                    Enter your official credentials and select your assigned station to continue.
+                </p>
+
+                <form method="post" id="registrationForm">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4">
+                        
+                        <div class="col-12">
+                            <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-person-vcard me-2"></i> 1. Officer Credentials</h5>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="{{ form.officer_name.id_for_label }}" class="form-label fw-bold">{{ form.officer_name.label }} *</label>
+                            {{ form.officer_name|add_class:"form-control form-control-lg"|attr:"placeholder:Full Name (e.g., A.B. Patil)" }}
+                            {% for error in form.officer_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.region_number.id_for_label }}" class="form-label fw-bold">{{ form.region_number.label }}</label>
+                            {{ form.region_number|add_class:"form-control form-control-lg"|attr:"placeholder:Region/Employee ID (Optional)" }}
+                            {% for error in form.region_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-bold">{{ form.phone_number.label }} *</label>
+                            {{ form.phone_number|add_class:"form-control form-control-lg"|attr:"placeholder:10-digit phone number" }}
+                            {% for error in form.phone_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">{{ form.password.label }} *</label>
+                            {{ form.password|add_class:"form-control form-control-lg"|attr:"placeholder:Enter Password" }}
+                            {% for error in form.password.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.confirm_password.id_for_label }}" class="form-label fw-bold">{{ form.confirm_password.label }} *</label>
+                            {{ form.confirm_password|add_class:"form-control form-control-lg"|attr:"placeholder:Confirm Password" }}
+                            {% for error in form.confirm_password.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        
+
+                        <div class="col-12 mt-4">
+                            <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-geo-alt-fill me-2"></i> 2. Select Police Station</h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_state" class="form-label fw-bold">{{ form.state.label }} *</label>
+                            {{ form.state|add_class:"form-select form-select-lg" }}
+                            {% for error in form.state.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_district" class="form-label fw-bold">{{ form.district.label }} *</label>
+                            {{ form.district|add_class:"form-select form-select-lg" }}
+                            {% for error in form.district.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_taluka" class="form-label fw-bold">{{ form.taluka.label }} *</label>
+                            {{ form.taluka|add_class:"form-select form-select-lg" }}
+                            {% for error in form.taluka.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_police_station" class="form-label fw-bold">{{ form.police_station.label }} *</label>
+                            {{ form.police_station|add_class:"form-select form-select-lg" }}
+                            {% for error in form.police_station.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-house-door-fill me-2"></i> 3. Station Address (Current)</h5>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <label for="{{ form.police_station_address.id_for_label }}" class="form-label fw-bold">{{ form.police_station_address.label }} *</label>
+                            {{ form.police_station_address|add_class:"form-control form-control-lg"|attr:"rows:2" }}
+                            {% for error in form.police_station_address.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.pincode.id_for_label }}" class="form-label fw-bold">{{ form.pincode.label }} *</label>
+                            {{ form.pincode|add_class:"form-control form-control-lg"|attr:"placeholder:Pincode" }}
+                            {% for error in form.pincode.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <h5 class="mb-3 text-secondary border-bottom pb-2"><i class="bi bi-envelope-fill me-2"></i> 4. Verification Email</h5>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="id_station_email" class="form-label fw-bold text-dark">Police Station Email (Pre-Approved)</label>
+                            <input type="email" id="id_station_email" name="station_email" class="form-control form-control-lg" readonly placeholder="Email will auto-fill from the selected Police Station">
+                            <small class="form-text text-success fw-semibold">The OTP will be sent to this email address for account activation.</small>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                            <i class="bi bi-shield-slash-fill me-2"></i> Request OTP & Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+// NOTE: JavaScript for cascading dropdowns is kept functional as provided previously.
+
+$(function() {
+    
+    // Bind change events
+    $("#id_state").change(function() {
+        loadDistricts(this.value);
+    });
+    $("#id_district").change(function() {
+        loadTalukas(this.value);
+    });
+    $("#id_taluka").change(function() {
+        loadPoliceStations(this.value);
+    });
+    $("#id_police_station").change(updateStationEmail);
+
+
+    function loadDistricts(stateId) {
+        var url = '{% url "police:ajax_load_districts" %}';
+        
+        $("#id_district").html('<option value="">Loading...</option>');
+        $("#id_taluka").html('<option value="">---------</option>');
+        $("#id_police_station").html('<option value="">---------</option>');
+        $("#id_station_email").val('');
+
+        if (stateId) {
+            $.get(url, {state: stateId}, function(data) {
+                $("#id_district").html('<option value="">Select District</option>');
+                $.each(data, function(i, v) {
+                    $("#id_district").append('<option value="'+v.id+'">'+v.name+'</option>');
+                });
+            }).fail(function() {
+                $("#id_district").html('<option value="">Error loading districts</option>');
+            });
+        } else {
+            $("#id_district").html('<option value="">---------</option>');
+        }
+    }
+
+    function loadTalukas(districtId) {
+        var url = '{% url "police:ajax_load_talukas" %}';
+
+        $("#id_taluka").html('<option value="">Loading...</option>');
+        $("#id_police_station").html('<option value="">---------</option>');
+        $("#id_station_email").val('');
+
+        if (districtId) {
+            $.get(url, {district: districtId}, function(data) {
+                $("#id_taluka").html('<option value="">Select Taluka</option>');
+                $.each(data, function(i, v) {
+                    $("#id_taluka").append('<option value="'+v.id+'">'+v.name+'</option>');
+                });
+            }).fail(function() {
+                 $("#id_taluka").html('<option value="">Error loading talukas</option>');
+            });
+        } else {
+            $("#id_taluka").html('<option value="">---------</option>');
+        }
+    }
+
+    function loadPoliceStations(talukaId) {
+        var url = '{% url "police:ajax_load_police_stations" %}';
+
+        $("#id_police_station").html('<option value="">Loading...</option>');
+        $("#id_station_email").val('');
+
+        if (talukaId) {
+            $.get(url, {taluka: talukaId}, function(data) {
+                $("#id_police_station").html('<option value="">Select Police Station</option>');
+                $.each(data, function(i, v) {
+                    // add data-email attribute to option
+                    $("#id_police_station").append('<option value="'+v.id+'" data-email="'+(v.email||'')+'">'+v.name+'</option>');
+                });
+                updateStationEmail(); // Update email if a station is pre-selected
+            }).fail(function() {
+                 $("#id_police_station").html('<option value="">Error loading stations</option>');
+            });
+        } else {
+            $("#id_police_station").html('<option value="">---------</option>');
+        }
+    }
+
+    function updateStationEmail() {
+        var selected = $("#id_police_station option:selected");
+        var email = selected.data('email') || '';
+        $("#id_station_email").val(email);
+    }
+    
+    // When form submits, copy the station email into a hidden field
+    $('#registrationForm').on('submit', function(){
+        var email = $("#id_station_email").val() || '';
+        // create hidden input dynamically
+        if ($('#hidden_station_email').length === 0) {
+            $(this).append('<input type="hidden" id="hidden_station_email" name="station_email" value="'+email+'">');
+        } else {
+            $('#hidden_station_email').val(email);
+        }
+        return true;
+    });
+
+});
+</script>
+{% endblock %}

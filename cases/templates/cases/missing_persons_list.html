@@ -1,0 +1,90 @@
+<!-- cases/templates/public/missing_persons_list.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <!-- 🛑 CRITICAL SECURITY HEADER 🛑 -->
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        .case-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid #e94b3c; /* Alert color */
+        }
+        .case-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        .case-photo {
+            width: 100%;
+            height: 300px;
+            border-radius: 4px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4 text-primary fw-bold">{{ title }}</h1>
+    <p class="text-center text-secondary mb-5">
+        Below is a list of all active and verified missing persons cases across the network. If you have information, please contact your local police department immediately.
+    </p>
+
+    <!-- Search Bar Placeholder -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <input type="text" id="publicSearch" class="form-control form-control-lg" placeholder="Search by name, location, or Complaint ID...">
+        </div>
+    </div>
+    
+    <div class="row g-4" id="caseListContainer">
+        {% for case in cases %}
+            <div class="col-md-6 col-lg-4 case-item" data-name="{{ case.missing_name|lower }}" data-location="{{ case.last_seen_location|lower }}">
+                <div class="card case-card h-100 shadow-sm">
+                    <div class="card-body">
+                        <!-- Use the primary image if available, else placeholder -->
+                        {% with first_photo=case.photos.first %}
+                            <img src="{% if first_photo %}{{ first_photo.image.url }}{% else %}{% static 'img/placeholder_person.png' %}{% endif %}" alt="{{ case.missing_name }}" class="case-photo mb-3">
+                        {% endwith %}
+
+                        <h5 class="card-title text-dark fw-bold">{{ case.missing_name|upper }}</h5>
+                        <p class="card-text small text-muted">Complaint ID: {{ case.complaint_id }}</p>
+                        
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-calendar-day me-2"></i> Last Seen: {{ case.last_seen_date|date:"M d, Y"|default:"N/A" }}</li>
+                            <li><i class="bi bi-geo-alt-fill me-2"></i> Location: <strong>{{ case.last_seen_location|default:"Unknown" }}</strong></li>
+                            <li><i class="bi bi-person-circle me-2"></i> Age/Gender: {{ case.missing_age|default:"N/A" }} / {{ case.missing_gender|default:"N/A" }}</li>
+                        </ul>
+                        
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-search h1 text-secondary d-block mb-3"></i>
+                <p class="h4 text-muted">No active missing persons cases are currently listed.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- JavaScript for client-side searching -->
+<script>
+    document.getElementById('publicSearch').addEventListener('keyup', function() {
+        const query = this.value.toLowerCase();
+        const cases = document.querySelectorAll('.case-item');
+
+        cases.forEach(item => {
+            const name = item.getAttribute('data-name');
+            const location = item.getAttribute('data-location');
+            const id = item.querySelector('.card-text').textContent.toLowerCase(); 
+
+            if (name.includes(query) || location.includes(query) || id.includes(query)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

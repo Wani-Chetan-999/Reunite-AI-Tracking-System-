@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-lg p-4 mt-5 auth-card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4 fw-bold text-info">
+                    <i class="bi bi-patch-check-fill me-2"></i> Verify OTP
+                </h2>
+                <p class="text-center text-muted mb-4">Enter the OTP sent to your police station email address to complete registration.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-info btn-lg fw-bold mt-3 text-white">
+                            <i class="bi bi-person-check-fill me-2"></i> Verify & Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

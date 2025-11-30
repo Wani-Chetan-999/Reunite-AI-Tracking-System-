@@ -25,7 +25,7 @@
             </h1>
         </a>
         
-        {% if request.user.is_authenticated %}
+        {% comment %} {% if request.user.is_authenticated %}
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle me-1"></i> {{ request.user.email }}
@@ -33,9 +33,49 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                     <li>
                         <span class="dropdown-item-text text-muted small">Logged in as:</span>
-                        <h6 class="dropdown-header py-1">{{ request.user.email }}</h6>
+                        <h6 class="dropdown-header py-2">{{ request.user.email }}</h6>
                     </li>
                     <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="post" action="{% url 'police:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div> {% endcomment %}
+            {% if request.user.is_authenticated %}
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-geo-alt-fill me-1"></i> {{ request.user.profile.police_station_name|default:"Profile Incomplete" }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li>
+                        <span class="dropdown-item-text text-muted small">Logged in as:</span>
+                        <h6 class="dropdown-header py-1 fw-bold mb-0">
+                            {{ request.user.profile.officer_name|default:"Officer Name N/A" }}
+                        </h6>
+                    </li>
+                    
+                    <li><hr class="dropdown-divider my-1"></li>
+                    
+                    <li>
+                        <span class="dropdown-item-text text-muted small">Station Contact:</span>
+                        <p class="dropdown-item-text py-0 mb-0">
+                            <i class="bi bi-envelope me-1"></i> {{ request.user.email }}
+                        </p>
+                        <p class="dropdown-item-text py-0 mb-0">
+                            <i class="bi bi-telephone me-1"></i> {{ request.user.profile.phone_number|default:"N/A" }}
+                        </p>
+                        <p class="dropdown-item-text py-0 small text-muted">
+                            <i class="bi bi-house-door me-1"></i> {{ request.user.profile.police_station_address|default:"Address N/A" }}
+                        </p>
+                    </li>
+                    
+                    <li><hr class="dropdown-divider"></li>
+                    
                     <li>
                         <form method="post" action="{% url 'police:logout' %}">
                             {% csrf_token %}
